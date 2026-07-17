@@ -1,0 +1,33 @@
+name: Update Savant Stats
+
+on:
+  schedule:
+    # Runs daily at 13:00 UTC = 9:00 AM ET (before lineups post, after overnight data settles)
+    - cron: '0 13 * * *'
+  workflow_dispatch:   # allows manual "Run workflow" button
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Fetch Savant stats
+        run: python fetch_savant.py
+
+      - name: Commit updated stats
+        run: |
+          git config user.name "ddp-bot"
+          git config user.email "actions@github.com"
+          git add pitcher_stats.json
+          git diff --cached --quiet || git commit -m "Update pitcher stats $(date -u +%Y-%m-%d)"
+          git push
