@@ -2,9 +2,8 @@ name: Update Savant Stats
 
 on:
   schedule:
-    # Runs daily at 13:00 UTC = 9:00 AM ET (before lineups post, after overnight data settles)
-    - cron: '0 13 * * *'
-  workflow_dispatch:   # allows manual "Run workflow" button
+    - cron: '0 13 * * *'   # daily 9:00 AM ET
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -15,6 +14,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -24,10 +25,22 @@ jobs:
       - name: Fetch Savant stats
         run: python fetch_savant.py
 
+      - name: Verify output exists
+        run: |
+          if [ ! -f pitcher_stats.json ]; then
+            echo "ERROR: pitcher_stats.json was not created"
+            exit 1
+          fi
+          echo "File size: $(wc -c < pitcher_stats.json) bytes"
+
       - name: Commit updated stats
         run: |
           git config user.name "ddp-bot"
           git config user.email "actions@github.com"
           git add pitcher_stats.json
-          git diff --cached --quiet || git commit -m "Update pitcher stats $(date -u +%Y-%m-%d)"
-          git push
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update pitcher stats $(date -u +%Y-%m-%d)"
+            git push
+          fi
