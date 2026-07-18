@@ -55,7 +55,7 @@ def fetch_chunk(d1, d2):
         try:
             req = urllib.request.Request(url, headers=HEADERS)
             with urllib.request.urlopen(req, timeout=120) as r:
-                return r.read().decode("utf-8")
+                return r.read().decode("utf-8-sig")  # -sig strips Savant's BOM, which otherwise corrupts the first column name (pitch_type)
         except Exception as e:
             print(f"  chunk {d1}..{d2} attempt {attempt} failed: {e}", file=sys.stderr)
             time.sleep(3)
