@@ -74,6 +74,8 @@ def main():
                 "gb": 0, "bip": 0,
                 "fb_velo_sum": 0.0, "fb_velo_n": 0,
                 "fb_velo_sum_recent": 0.0, "fb_velo_n_recent": 0,
+                "fb_spin_sum": 0.0, "fb_spin_n": 0,
+                "fb_spin_sum_recent": 0.0, "fb_spin_n_recent": 0,
             }
         return acc[pid]
 
@@ -121,17 +123,28 @@ def main():
             # Fastball velocity
             pt = (row.get("pitch_type") or "").strip()
             if pt in FASTBALLS:
+                gd = (row.get("game_date") or "")[:10]
+                is_recent = False
+                try:
+                    is_recent = date.fromisoformat(gd) >= RECENT_CUTOFF
+                except ValueError:
+                    pass
                 sp = to_float(row.get("release_speed"))
                 if sp and sp > 60:
                     a["fb_velo_sum"] += sp
                     a["fb_velo_n"] += 1
-                    gd = (row.get("game_date") or "")[:10]
-                    try:
-                        if date.fromisoformat(gd) >= RECENT_CUTOFF:
-                            a["fb_velo_sum_recent"] += sp
-                            a["fb_velo_n_recent"] += 1
-                    except ValueError:
-                        pass
+                    if is_recent:
+                        a["fb_velo_sum_recent"] += sp
+                        a["fb_velo_n_recent"] += 1
+                # Spin rate — same fastball-only filter (spin varies hugely by
+                # pitch type, so mixing pitch types would create false trends)
+                spin = to_float(row.get("release_spin_rate"))
+                if spin and 1200 < spin < 3600:
+                    a["fb_spin_sum"] += spin
+                    a["fb_spin_n"] += 1
+                    if is_recent:
+                        a["fb_spin_sum_recent"] += spin
+                        a["fb_spin_n_recent"] += 1
         total_pitches += n
         print(f"[{d2}] +{n} pitches (running total {total_pitches})")
         time.sleep(0.6)  # be polite
@@ -154,6 +167,14 @@ def main():
             drop = round(e["avgVelo"] - e["recentVelo"], 1)
             e["veloDrop"] = drop
             e["veloTrend"] = "down" if drop >= 1.5 else "up" if drop <= -0.8 else "stable"
+        if a["fb_spin_n"] >= 50:
+            e["avgSpin"] = round(a["fb_spin_sum"] / a["fb_spin_n"])
+        if a["fb_spin_n_recent"] >= 20:
+            e["recentSpin"] = round(a["fb_spin_sum_recent"] / a["fb_spin_n_recent"])
+        if e.get("avgSpin") and e.get("recentSpin"):
+            sdrop = e["avgSpin"] - e["recentSpin"]
+            e["spinDrop"] = sdrop
+            e["spinTrend"] = "down" if sdrop >= 100 else "up" if sdrop <= -80 else "stable"
         if e:
             pitchers[pid] = e
 
@@ -167,7 +188,7 @@ def main():
         json.dump(out, f, separators=(",", ":"))
 
     print(f"\nWrote pitcher_stats.json — {len(pitchers)} pitchers from {total_pitches} pitches")
-    for stat in ["xwoba", "whiffPct", "gbRate", "avgVelo", "recentVelo", "veloTrend"]:
+    for stat in ["xwoba", "whiffPct", "gbRate", "avgVelo", "recentVelo", "veloTrend", "avgSpin", "spinTrend"]:
         n = sum(1 for e in pitchers.values() if stat in e)
         print(f"  {stat}: {n}")
     if len(pitchers) < 50:
