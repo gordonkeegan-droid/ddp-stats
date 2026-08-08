@@ -11,6 +11,7 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -22,25 +23,30 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Fetch Savant stats
+      - name: Fetch Savant pitcher stats
         run: python fetch_savant.py
 
-      - name: Verify output exists
+      - name: Build HR player distributions
+        run: python build_players.py
+
+      - name: Verify outputs exist
         run: |
-          if [ ! -f pitcher_stats.json ]; then
-            echo "ERROR: pitcher_stats.json was not created"
-            exit 1
-          fi
-          echo "File size: $(wc -c < pitcher_stats.json) bytes"
+          for f in pitcher_stats.json players.json; do
+            if [ ! -f "$f" ]; then
+              echo "ERROR: $f was not created"
+              exit 1
+            fi
+            echo "$f size: $(wc -c < $f) bytes"
+          done
 
       - name: Commit updated stats
         run: |
           git config user.name "ddp-bot"
           git config user.email "actions@github.com"
-          git add pitcher_stats.json
+          git add pitcher_stats.json players.json
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Update pitcher stats $(date -u +%Y-%m-%d)"
+            git commit -m "Update pitcher stats + HR players $(date -u +%Y-%m-%d)"
             git push
           fi
