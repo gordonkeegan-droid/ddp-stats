@@ -1,0 +1,42 @@
+{
+  "_meta": {
+    "bearing": "compass degrees true, home plate -> center field. Values are best-effort from published orientation diagrams; VERIFY with verify_bearings.py before trusting wind projections (a 15deg error costs ~3% on the cos projection at 30deg off-axis, more near crosswind).",
+    "roof": "open | fixed | retractable",
+    "close_rules": "heuristic thresholds for retractable roofs, applied to game-time forecast: close if temp_f > hot or temp_f < cold or precip_prob > rain (percent)",
+    "team_codes": "match Statcast home_team. ATH = Sutter Health Park (Sacramento, 2025+). OAK retained for historical fits. TB = Tropicana (fixed); their 2025 games were at Steinbrenner Field (open) - handle season 2025 TB specially in historical joins.",
+    "notes": "lat/lon are stadium centroids, plenty for Open-Meteo's grid resolution"
+  },
+  "parks": {
+    "ARI": {"name": "Chase Field", "lat": 33.4453, "lon": -112.0667, "bearing": 25, "roof": "retractable", "close_rules": {"hot": 88, "cold": 50, "rain": 40}},
+    "ATL": {"name": "Truist Park", "lat": 33.8908, "lon": -84.4678, "bearing": 145, "roof": "open"},
+    "BAL": {"name": "Camden Yards", "lat": 39.2839, "lon": -76.6217, "bearing": 31, "roof": "open"},
+    "BOS": {"name": "Fenway Park", "lat": 42.3467, "lon": -71.0972, "bearing": 68, "roof": "open"},
+    "CHC": {"name": "Wrigley Field", "lat": 41.9484, "lon": -87.6553, "bearing": 43, "roof": "open"},
+    "CWS": {"name": "Rate Field", "lat": 41.8299, "lon": -87.6338, "bearing": 8, "roof": "open"},
+    "CIN": {"name": "Great American Ball Park", "lat": 39.0975, "lon": -84.5066, "bearing": 118, "roof": "open"},
+    "CLE": {"name": "Progressive Field", "lat": 41.4962, "lon": -81.6852, "bearing": 8, "roof": "open"},
+    "COL": {"name": "Coors Field", "lat": 39.7559, "lon": -104.9942, "bearing": 25, "roof": "open"},
+    "DET": {"name": "Comerica Park", "lat": 42.3390, "lon": -83.0485, "bearing": 145, "roof": "open"},
+    "HOU": {"name": "Daikin Park", "lat": 29.7573, "lon": -95.3555, "bearing": 343, "roof": "retractable", "close_rules": {"hot": 84, "cold": 55, "rain": 35}},
+    "KC":  {"name": "Kauffman Stadium", "lat": 39.0517, "lon": -94.4803, "bearing": 45, "roof": "open"},
+    "LAA": {"name": "Angel Stadium", "lat": 33.8003, "lon": -117.8827, "bearing": 65, "roof": "open"},
+    "LAD": {"name": "Dodger Stadium", "lat": 34.0739, "lon": -118.2400, "bearing": 26, "roof": "open"},
+    "MIA": {"name": "loanDepot park", "lat": 25.7781, "lon": -80.2196, "bearing": 78, "roof": "retractable", "close_rules": {"hot": 82, "cold": 55, "rain": 30}},
+    "MIL": {"name": "American Family Field", "lat": 43.0280, "lon": -87.9712, "bearing": 128, "roof": "retractable", "close_rules": {"hot": 92, "cold": 58, "rain": 35}},
+    "MIN": {"name": "Target Field", "lat": 44.9817, "lon": -93.2776, "bearing": 90, "roof": "open"},
+    "NYM": {"name": "Citi Field", "lat": 40.7571, "lon": -73.8458, "bearing": 15, "roof": "open"},
+    "NYY": {"name": "Yankee Stadium", "lat": 40.8296, "lon": -73.9262, "bearing": 75, "roof": "open"},
+    "OAK": {"name": "Oakland Coliseum (thru 2024)", "lat": 37.7516, "lon": -122.2005, "bearing": 55, "roof": "open"},
+    "ATH": {"name": "Sutter Health Park (2025+)", "lat": 38.5804, "lon": -121.5133, "bearing": 40, "roof": "open"},
+    "PHI": {"name": "Citizens Bank Park", "lat": 39.9061, "lon": -75.1665, "bearing": 10, "roof": "open"},
+    "PIT": {"name": "PNC Park", "lat": 40.4469, "lon": -80.0057, "bearing": 115, "roof": "open"},
+    "SD":  {"name": "Petco Park", "lat": 32.7076, "lon": -117.1570, "bearing": 0, "roof": "open"},
+    "SEA": {"name": "T-Mobile Park", "lat": 47.5914, "lon": -122.3325, "bearing": 48, "roof": "retractable", "close_rules": {"hot": 999, "cold": 48, "rain": 45}, "note": "umbrella roof - park plays open-air even when covered; treat closed as wind-killed but temp-live"},
+    "SF":  {"name": "Oracle Park", "lat": 37.7786, "lon": -122.3893, "bearing": 87, "roof": "open"},
+    "STL": {"name": "Busch Stadium", "lat": 38.6226, "lon": -90.1928, "bearing": 62, "roof": "open"},
+    "TB":  {"name": "Tropicana Field", "lat": 27.7683, "lon": -82.6534, "bearing": 45, "roof": "fixed"},
+    "TEX": {"name": "Globe Life Field", "lat": 32.7473, "lon": -97.0847, "bearing": 40, "roof": "retractable", "close_rules": {"hot": 83, "cold": 55, "rain": 35}},
+    "TOR": {"name": "Rogers Centre", "lat": 43.6414, "lon": -79.3894, "bearing": 345, "roof": "retractable", "close_rules": {"hot": 95, "cold": 55, "rain": 40}},
+    "WSH": {"name": "Nationals Park", "lat": 38.8730, "lon": -77.0074, "bearing": 28, "roof": "open"}
+  }
+}
