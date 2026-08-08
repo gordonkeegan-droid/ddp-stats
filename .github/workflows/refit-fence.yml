@@ -1,0 +1,56 @@
+name: Refit Fence Model
+
+on:
+  schedule:
+    - cron: '0 12 1 * *'   # 1st of every month, 8:00 AM ET
+  workflow_dispatch:        # or run it any time from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  refit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install numpy scikit-learn
+
+      - name: Refit fence model on current-ball era
+        run: python refit_fence.py
+
+      - name: Verify output
+        run: |
+          if [ ! -f fence_model.json ]; then
+            echo "ERROR: fence_model.json was not created"
+            exit 1
+          fi
+          echo "fence_model.json size: $(wc -c < fence_model.json) bytes"
+          python -c "
+          import json
+          fm = json.load(open('fence_model.json'))
+          assert 'grid' in fm and 'park_logit_offsets' in fm and 'platt' in fm['meta']
+          print('parks:', len(fm['park_logit_offsets']), '| BBE:', fm['meta']['n_batted_balls'])
+          "
+
+      - name: Commit refit model
+        run: |
+          git config user.name "ddp-bot"
+          git config user.email "actions@github.com"
+          git add fence_model.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Refit fence model $(date -u +%Y-%m-%d)"
+            git push
+          fi
