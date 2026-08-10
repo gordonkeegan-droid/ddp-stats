@@ -53,7 +53,13 @@ age_days = (bb["game_date"].max()-bb["game_date"]).dt.days
 bb["w"] = np.exp(-age_days/270.0)
 
 # ---------- league fence-logit machinery (for pitcher shifts) ----------
-fm = json.load(open("output/fence_model.json"))
+# The refit workflow commits fence_model.json to the repo ROOT; some local
+# layouts keep it under output/. Accept either so a layout difference can
+# never kill the daily build again.
+_FM_PATH = next((p for p in ("fence_model.json", "output/fence_model.json") if os.path.exists(p)), None)
+if _FM_PATH is None:
+    raise SystemExit("fence_model.json not found at repo root or output/ — run the Refit Fence Model workflow first")
+fm = json.load(open(_FM_PATH))
 g_ev=np.array(fm["grid"]["ev"]); g_la=np.array(fm["grid"]["la"]); g_sp=np.array(fm["grid"]["spray"])
 G = np.array(fm["grid"]["p"])
 def interp_logit(ev,la,sp):
@@ -124,6 +130,6 @@ out={"meta":{"vintage":"2021-2022 DEMO -- rebuild with --local for current ball"
              "league_bbe_pa":round(LEAGUE_BBE_PA,3),"league_z":round(LEAGUE_Z,3),
              "shrink_k_bbe":80},
      "pools":pools,"hitters":hitters,"pitchers":pitchers}
-json.dump(out,open("output/players.json","w"))
+json.dump(out,open("players.json","w"))  # repo root — matches the workflow verify step and the raw URL the HR tool reads
 print(f"\nhitters {len(hitters)}  pitchers {len(pitchers)}  league bbe/pa {LEAGUE_BBE_PA:.3f}")
-print("size:", round(os.path.getsize("output/players.json")/1e6,2),"MB")
+print("size:", round(os.path.getsize("players.json")/1e6,2),"MB")
