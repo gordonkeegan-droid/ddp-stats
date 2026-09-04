@@ -11,7 +11,6 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -22,6 +21,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install pandas numpy pyarrow
 
       - name: Fetch Savant pitcher stats
         run: python fetch_savant.py
@@ -36,7 +38,7 @@ jobs:
               echo "ERROR: $f was not created"
               exit 1
             fi
-            echo "$f size: $(wc -c < $f) bytes"
+            echo "$f: $(wc -c < "$f") bytes"
           done
 
       - name: Commit updated stats
