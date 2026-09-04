@@ -45,9 +45,10 @@ HEADERS = {
     "Referer": "https://baseballsavant.mlb.com/statcast_search",
 }
 
-# Server-side batted-ball filter. If Savant ever ignores it, 5-day chunks stay
-# under the row cap anyway and we filter client-side on bb_type.
-BBT_FILTER = "&hfBBT=ground%5C.%5C.ball%7Cline%5C.%5C.drive%7Cfly%5C.%5C.ball%7Cpopup%7C"
+# NOTE: no server-side batted-ball filter here (unlike refit_fence.py).
+# PA counting needs strikeouts/walks in the record; the filter strips them and
+# silently inflates every bbe_pa to ~1.0. Full 5-day chunks are proven daily
+# at these volumes by fetch_savant.py.
 
 # events that end a row but are not plate-appearance endings
 NON_PA_EVENTS = {
@@ -104,7 +105,9 @@ class FenceGrid:
         return c0 * (1 - fz) + c1 * fz
 
     def logit(self, ev, la, spray):
-        p = min(max(self.prob(ev, la, spray), 1e-6), 1 - 1e-6)
+        # floor matches the app's gridLogit clamp (1e-4) so pitcher shifts are
+        # computed on the same scale the simulator uses
+        p = min(max(self.prob(ev, la, spray), 1e-4), 1 - 1e-4)
         return math.log(p / (1 - p))
 
 
@@ -120,12 +123,11 @@ def reservoir_add(sample_list, seen_count, item, cap, rng):
 
 
 # ---------------------------------------------------------------- fetch
-def fetch_chunk(d1, d2, bbt_filter=True):
+def fetch_chunk(d1, d2):
     url = (
         "https://baseballsavant.mlb.com/statcast_search/csv?all=true"
         f"&player_type=batter&type=details&minors=false"
         f"&game_date_gt={d1}&game_date_lt={d2}"
-        + (BBT_FILTER if bbt_filter else "")
     )
     for attempt in (1, 2, 3):
         try:
@@ -134,9 +136,6 @@ def fetch_chunk(d1, d2, bbt_filter=True):
                 return r.read().decode("utf-8-sig")
         except Exception as e:
             print(f"  chunk {d1}..{d2} attempt {attempt} failed: {e}", file=sys.stderr)
-            if attempt == 2 and bbt_filter:
-                # last resort: retry without the batted-ball filter param
-                return fetch_chunk(d1, d2, bbt_filter=False)
             time.sleep(3)
     return None
 
@@ -301,6 +300,10 @@ def main():
     if len(hitters_out) < 100:
         print("WARNING: sparse hitter output -- check fetch errors above",
               file=sys.stderr)
+        sys.exit(1)
+    if not (0.5 < league_bbe_pa < 0.8):
+        print(f"ERROR: league_bbe_pa={league_bbe_pa} is implausible (expect ~0.66)."
+              " PA counting is broken -- refusing to publish.", file=sys.stderr)
         sys.exit(1)
 
 
