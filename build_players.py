@@ -12,8 +12,11 @@ so it's a much lighter pull than fetch_savant.py) and writes players.json:
   meta    : league BBE/PA, league mean fence logit, shrinkage constant
 
 Standard library only -- no pip installs needed in the Action.
-Spray convention: field coordinates, negative = left-field line, matching the
-fence model grid and the LF_line..RF_line park sector offsets.
+Spray conventions (must match ddp-hr.html's simHitter):
+  stored hitter samples & pools: batter-relative, POSITIVE = PULL side
+    (the app un-mirrors to field coords via the hitter's stand)
+  pools keyed by BATTER STAND (league shrinkage stays spray-coherent)
+  pitcher shifts / league_z: field coordinates against the fence grid
 """
 import csv
 import io
@@ -185,12 +188,13 @@ def process_rows(reader, state, grid, rng):
         hy = to_float(row.get("hc_y"))
         if ev is None or la is None or hx is None or hy is None:
             continue  # untracked ball: counts toward n, no sample
-        sp = spray_angle(hx, hy)
-        item = [round(ev, 1), round(la, 1), round(sp, 1)]
+        sp = spray_angle(hx, hy)          # field coords (neg = LF) for the grid
+        sb = -sp if stand == "R" else sp  # batter-relative (pos = pull) for storage
+        item = [round(ev, 1), round(la, 1), round(sb, 1)]
 
         reservoir_add(h["s"], h["n"] - 1, item, SAMPLE_CAP, rng)
 
-        pool = pools[throws]
+        pool = pools[stand]               # pools keyed by BATTER STAND, pull-relative
         reservoir_add(pool["s"], pool["seen"], item, POOL_CAP, rng)
         pool["seen"] += 1
 
